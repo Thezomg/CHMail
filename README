@@ -1,0 +1,10 @@
+Mail System Implemented in CommandHelper
+
+Copy the contents of config.txt into your main CommandHelper file
+Copy the contents of auto_include.ms and main.ms into the respective files.
+
+commands:
+	/mail: shows mail help
+	/mail read: read all mail
+	/mail read <id>: read a single message
+	/mail send <user> <message>: send a message to a user
