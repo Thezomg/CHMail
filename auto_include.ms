@@ -1,98 +1,86 @@
-proc(_isonline, @player, @msg,
+proc(_isonline, @pl, @msg,
     assign(@ap, all_players())
+    assign(@player, to_lower(@pl))
+    
     foreach(@ap, @p,
-            if(equals(to_lower(@player), to_lower(@p)), return(true))
+        if(equals(@player, to_lower(@p)), 
+            return(true)
+        )
     )
 
     return(false)
 )
 
 proc(_mail_dispatch, @args,
-    assign(@permerror, 'You do not have permission for this command.')
-    
     ifelse(array_index_exists(@args, 0),
         assign(@first, array_remove(@args, 0)) # pop first item
     , # else
         assign(@first, '')
     )
     
-    if(not(has_permission('mail')),
-        msg(@permerror)
-        return(false)
-    )
-    
     switch(to_lower(@first),
         'send',
-            if(not(has_permission('mail.send')),
-                msg(@permerror)
-                return(false)
-            )
+            # /mail send <player> <message>
             
             if(array_index_exists(@args, 1),
-                # /mail send Deaygo It lives!
-                _send_mail(player(), @args[0], array_implode(@args[1..]))
+                if(_send_mail(player(), @args[0], array_implode(@args[1..])),
+                    msg(concat(color(green), 'Mail successfully sent to ', @args[0]))
+                )
+                
                 return(true)
             )
             
-            msg('Usage: /mail send <player> <message>') 
-            ,
+            msg('Usage: /mail send <player> <message>'),
             
         'read',
+            # /mail read [id]
+            
             ifelse(array_index_exists(@args, 0),
-                # /mail read 1
-                _read_mail_id(player(), @args[0]) 
+                # /mail read <id>
+                
+                ifelse(_read_mail_id(player(), @args[0]),
+                    msg('Type /mail clear to clear your mail entries.')
+                , #else
+                    msg(concat(color(red), 'That id does not exist'))
+                )
+                
                 return(true)
             , # else
                 # /mail read
-                _read_mail(player()) 
+                
+                _read_mail(player())
+                
                 return(true)
             ),
             
-        'readother',
-            ifelse((has_permission('mail.readother')),
-                ifelse(array_index_exists(@args, 1),
-                    # /mail readother Deaygo 1
-                    _read_mail_id(@args[0], @args[1]) 
-                    return(true)
-                , # else
-                    # /mail readother Deaygo
-                    if(array_index_exists(@args, 0),
-                        _read_mail(@args[0]) 
-                        return(true)
-                    )
-                )
-                , # else
-                    msg(@permerror)
-                    return(false)
-            )
-            
-            msg('Usage: /mail readother <player> [id]')
-            ,
-            
         'clear',
             # /mail clear
+            
             _clear_mail(player()),
             
-        'clearother',
-            # /mail clearother <player>
-            if(not(has_permission('mail.clearother')),
-                msg(@permerror)
-                return(false)
-            )
+        'delete',
+            # /mail delete <id>
             
-            if(array_index_exists(@args, 0),
-                _clear_mail(@args[0])
+            ifelse(array_index_exists(@args, 0),
+                ifelse(_del_mail(player(), @args[0]),
+                    msg(concat(color(green), 'Message with id' @args[0] 'deleted.'))
+                , # else
+                    msg(concat(color(red), 'That index does not exist!'))
+                )
+                
                 return(true)
             )
             
-            msg('Usage: /mail clearother <player>'),
+            msg('Usage: /mail delete <id>'),
+            
+        # default
             
         msg('The following commands are available:')
-        msg('- /mail: show this message')
-        msg('- /mail read [id]: read messages')
-        msg('- /mail readother <player> [id]: read messages for <player>')
-        msg('- /mail clear: clear all messages')
-        msg('- /mail send <player> <message>: send <message> to player.')
+        msg(concat('- ', color(green), '/mail', color(white), ': show this message'))
+        msg(concat('- ', color(green), '/mail send <player> <message>', color(white), ': send <message> to player.'))
+        msg(concat('- ', color(green), '/mail read [id]', color(white), ': read messages'))
+        msg(concat('- ', color(green), '/mail clear', color(white), ': clear all messages'))
+        msg(concat('- ', color(green), '/mail delete <id>', color(white), ': delete message <id>'))
     )
 )
 
@@ -106,43 +94,60 @@ proc(_send_mail, @from, @to, @msg,
     
     array_push(@mail, @msg);
     store_value(concat('mail_', to_lower(@to)), @mail);
-    msg(concat(color(green), 'Mail successfully sent to ', @to, color(white)))
     
     if(_isonline(@to),
-        tmsg(@to,concat(color(green), 'You have mail! Type /mail read to view.', color(white)))
+        tmsg(@to,concat(color(green), 'You have mail! Type /mail read to view.'))
     )
+    
+    return(true)
 )
 
 proc(_read_mail, @player,
     assign(@mail, get_value(concat('mail_', to_lower(@player))))
-    assign(@i, 1);
+    assign(@i, 1)
+    
     if(is_null(@mail),
-        msg(concat(color(red), 'You have no mail', color(white)))
-    ,
-        foreach(@mail,@msg,
+        msg(concat(color(red), 'No mail for' to_lower(@player), '.'))
+    , # else
+        foreach(@mail, @msg,
             if(lt(length(@msg[1]),20),
                 assign(@message, @msg[1])
             ,
                 assign(@message, concat(substr(@msg[1], 0, 17), '...'))
             )
+            
             msg(concat(@i, ') [', color(red), @msg[0], color(white),'] ', @message))
-            inc(@i);
+            inc(@i)
         )
-        msg('Type /mail clear to clear your mail entries.')
     )
 )
 
 proc(_read_mail_id, @player, @id,
     assign(@mail, get_value(concat('mail_', to_lower(@player))))
+    
     try(
         msg(concat('[', color(red), @mail[subtract(@id, 1)][0],color(white),'] ', @mail[subtract(@id, 1)][1]))
-        msg('Type /mail clear to clear your mail entries.')
-    ,@ex,
-        msg(concat(color(red), 'That message does not exist', color(white)))
+        return(true)
+    , @ex,
+        return(false)
     )
 )
 
 proc(_clear_mail, @player,
     store_value(concat('mail_', to_lower(@player)), null)
-    msg(concat(color(green), 'Mail successfully cleared for ' @player, color(white)))
+    msg(concat(color(green), 'Mail successfully cleared for ' @player))
+)
+
+proc(_del_mail, @player, @id,
+    assign(@mail, get_value(concat('mail_', to_lower(@player))))
+    assign(@remid, subtract(@id, 1))
+    
+    ifelse(array_index_exists(@mail, @remid),
+        array_remove(@mail, @remid)
+        store_value(concat('mail_', to_lower(@player)), @mail)
+        
+        return(true)
+    , # else
+        return(false)
+    )
 )
