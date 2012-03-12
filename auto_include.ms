@@ -85,7 +85,7 @@ proc(_mail_dispatch, @args,
 )
 
 proc(_send_mail, @from, @to, @msg,
-    assign(@mail, get_value(concat('mail_', to_lower($to))))
+    assign(@mail, get_value(concat('mail.', to_lower($to))))
     assign(@msg, array(@from, @msg));
     
     if(is_null(@mail),
@@ -93,7 +93,7 @@ proc(_send_mail, @from, @to, @msg,
     )
     
     array_push(@mail, @msg);
-    store_value(concat('mail_', to_lower(@to)), @mail);
+    store_value(concat('mail.', to_lower(@to)), @mail);
     
     if(_isonline(@to),
         tmsg(@to,concat(color(green), 'You have mail! Type /mail read to view.'))
@@ -103,7 +103,7 @@ proc(_send_mail, @from, @to, @msg,
 )
 
 proc(_read_mail, @player,
-    assign(@mail, get_value(concat('mail_', to_lower(@player))))
+    assign(@mail, get_value(concat('mail.', to_lower(@player))))
     assign(@i, 1)
     
     if(or(is_null(@mail), equals(length(@mail), 0)),
@@ -125,7 +125,7 @@ proc(_read_mail, @player,
 )
 
 proc(_read_mail_id, @player, @id,
-    assign(@mail, get_value(concat('mail_', to_lower(@player))))
+    assign(@mail, get_value(concat('mail.', to_lower(@player))))
     
     try(
         msg(concat('[', color(red), @mail[subtract(@id, 1)][0],color(white),'] ', @mail[subtract(@id, 1)][1]))
@@ -136,17 +136,17 @@ proc(_read_mail_id, @player, @id,
 )
 
 proc(_clear_mail, @player,
-    clear_value(concat('mail_', to_lower(@player)))
+    clear_value(concat('mail.', to_lower(@player)))
     msg(concat(color(green), 'Mail successfully cleared for ' @player))
 )
 
 proc(_del_mail, @player, @id,
-    assign(@mail, get_value(concat('mail_', to_lower(@player))))
+    assign(@mail, get_value(concat('mail.', to_lower(@player))))
     assign(@remid, subtract(@id, 1))
     
     ifelse(array_index_exists(@mail, @remid),
         array_remove(@mail, @remid)
-        store_value(concat('mail_', to_lower(@player)), @mail)
+        store_value(concat('mail.', to_lower(@player)), @mail)
         
         return(true)
     , # else
