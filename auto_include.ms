@@ -106,9 +106,11 @@ proc(_read_mail, @player,
     assign(@mail, get_value(concat('mail_', to_lower(@player))))
     assign(@i, 1)
     
-    if(is_null(@mail),
+    if(or(is_null(@mail), equals(length(@mail), 0)),
         msg(concat(color(red), 'No mail for' to_lower(@player), '.'))
     , # else
+		msg(concat(color(green), 'Inbox for' to_lower(@player), ':'))
+		
         foreach(@mail, @msg,
             if(lt(length(@msg[1]),20),
                 assign(@message, @msg[1])
@@ -134,7 +136,7 @@ proc(_read_mail_id, @player, @id,
 )
 
 proc(_clear_mail, @player,
-    store_value(concat('mail_', to_lower(@player)), null)
+    clear_value(concat('mail_', to_lower(@player)))
     msg(concat(color(green), 'Mail successfully cleared for ' @player))
 )
 
