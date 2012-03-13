@@ -1,10 +1,13 @@
 Mail System Implemented in CommandHelper
 
-Copy the contents of config.txt into your main CommandHelper file
-Copy the contents of auto_include.ms and main.ms into the respective files.
+Copy all files into any location under your LocalPackages directory (may we suggest LocalPackages/CHMail?).
+
+This script requires version 3.3.1 or higher of CommandHelper.
 
 commands:
 	/mail: shows mail help
-	/mail read: read all mail
+	/mail read: view the message index
 	/mail read <id>: read a single message
 	/mail send <user> <message>: send a message to a user
+	/mail clear: clear all messages
+	/mail delete <id>: delete a specific message
