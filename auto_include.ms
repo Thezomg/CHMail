@@ -23,9 +23,10 @@ proc(_mail_dispatch, @args,
     _mail_debug('_mail_dispatch called with ' @args)
     
     ifelse(array_index_exists(@args, 0),
-        assign(@first, array_remove(@args, 0)) # pop first item
+        assign(@first, @args[0]) # pop first item
+        array_remove(@args, 0)
     , # else
-        assign(@first, '')
+        assign(@first, '')	
     )
     
     switch(to_lower(@first),
