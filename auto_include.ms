@@ -1,3 +1,11 @@
+assign(@_mail_debug, false)
+
+proc(_mail_debug, @msg,
+    if(equals(@_mail_debug, true),
+        console(@msg)
+    )
+)
+
 proc(_isonline, @pl, @msg,
     assign(@ap, all_players())
     assign(@player, to_lower(@pl))
@@ -12,6 +20,8 @@ proc(_isonline, @pl, @msg,
 )
 
 proc(_mail_dispatch, @args,
+    _mail_debug('_mail_dispatch called with ' @args)
+    
     ifelse(array_index_exists(@args, 0),
         assign(@first, array_remove(@args, 0)) # pop first item
     , # else
@@ -21,8 +31,11 @@ proc(_mail_dispatch, @args,
     switch(to_lower(@first),
         'send',
             # /mail send <player> <message>
+            _mail_debug('switching to send')
             
             if(array_index_exists(@args, 1),
+                _mail_debug('sending' @args[1..] 'to' @args[0])
+                
                 if(_send_mail(player(), @args[0], array_implode(@args[1..])),
                     msg(concat(color(green), 'Mail successfully sent to ', @args[0]))
                 )
@@ -34,9 +47,11 @@ proc(_mail_dispatch, @args,
             
         'read',
             # /mail read [id]
+            _mail_debug('switching to read')
             
             ifelse(array_index_exists(@args, 0),
                 # /mail read <id>
+                _mail_debug('reading id' @args[0])
                 
                 ifelse(_read_mail_id(player(), @args[0]),
                     msg('Type /mail clear to clear your mail entries.')
@@ -47,6 +62,7 @@ proc(_mail_dispatch, @args,
                 return(true)
             , # else
                 # /mail read
+                _mail_debug('reading mail index')
                 
                 _read_mail(player())
                 
@@ -55,13 +71,17 @@ proc(_mail_dispatch, @args,
             
         'clear',
             # /mail clear
+            _mail_debug('switching to clear')
             
             _clear_mail(player()),
             
         'delete',
             # /mail delete <id>
+            _mail_debug('switching to delete')
             
             ifelse(array_index_exists(@args, 0),
+                _mail_debug('deleting id' @args[0])
+                
                 ifelse(_del_mail(player(), @args[0]),
                     msg(concat(color(green), 'Message with id' @args[0] 'deleted.'))
                 , # else
@@ -74,7 +94,8 @@ proc(_mail_dispatch, @args,
             msg('Usage: /mail delete <id>'),
             
         # default
-            
+        _mail_debug('defaulting to help')
+        
         msg('The following commands are available:')
         msg(concat('- ', color(green), '/mail', color(white), ': show this message'))
         msg(concat('- ', color(green), '/mail send <player> <message>', color(white), ': send <message> to player.'))
