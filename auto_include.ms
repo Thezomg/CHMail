@@ -9,6 +9,20 @@
 
 export(assign(@_mail_debug, false))
 
+proc(_player_mail, @player,
+    assign(@mail, get_value(concat('chmail.inbox.', to_lower(@player))))
+    
+    return(@mail)
+)
+
+proc(_update_player_mail, @player, @mail,
+    store_value(concat('chmail.inbox.', to_lower(@player)), @mail)
+)
+
+proc(_clear_player_mail, @player,
+    clear_value(concat('chmail.inbox.', to_lower(@player)))
+)
+
 proc(_item_name_to_value, @i,
     # Translates an item's human-readable name, if present, into its
     # integer equivalent. Keeps damage values in mind.
@@ -62,7 +76,7 @@ proc(_mail_dispatch, @args,
         
         'send',
             # /mail send <player> <message>
-            _mail_debug('switching to send')
+            _mail_debug('_mail_dispatch.send')
             
             # Make sure there is at least 2 items in the args.
             if(array_index_exists(@args, 1),
@@ -81,7 +95,7 @@ proc(_mail_dispatch, @args,
 
         'senditem',
             # /mail send <player> <item> <count>
-            _mail_debug('switching to senditem')
+            _mail_debug('_mail_dispatch.senditem')
             
             # Check number of arguments.
             if(equals(length(@args), 3),
@@ -95,6 +109,7 @@ proc(_mail_dispatch, @args,
             ),
             
         'accept',
+            _mail_debug('_mail_dispatch.accept')
             # /mail accept <id>
             
             # Check arguments.
@@ -111,7 +126,7 @@ proc(_mail_dispatch, @args,
             
         'read',
             # /mail read [id]
-            _mail_debug('switching to read')
+            _mail_debug('_mail_dispatch.read')
             
             # Check args. Don't care about extra args.
             ifelse(array_index_exists(@args, 0),
@@ -134,17 +149,17 @@ proc(_mail_dispatch, @args,
                 _mail_debug('reading mail index')
                 
                 # Display brief index, max 20 chars per mail.
-                _read_mail(player())
-                
-                msg('Type /mail clear to clear your mail entries.')
-                msg('Type /mail accept <id> to accept an item.')
-                
+                if(_read_mail(player()),
+                    msg('Type /mail clear to clear your mail entries.')
+                    msg('Type /mail accept <id> to accept an item.')
+                    msg('Type /mail delete <id> to delete a specific mail.')
+                )
                 return(true)
             ),
             
         'clear',
             # /mail clear
-            _mail_debug('switching to clear')
+            _mail_debug('_mail_dispatch.clear')
             
             # Clear all items of mail. 
             # TODO: Should probably make this sensitive to items as well.
@@ -152,7 +167,7 @@ proc(_mail_dispatch, @args,
             
         'delete',
             # /mail delete <id>
-            _mail_debug('switching to delete')
+            _mail_debug('_mail_dispatch.delete')
             
             # Check args. Don't care about extras.
             ifelse(array_index_exists(@args, 0),
@@ -172,7 +187,7 @@ proc(_mail_dispatch, @args,
             msg('Usage: /mail delete <id>'),
             
         # default
-        _mail_debug('defaulting to help')
+        _mail_debug('_mail_dispatch.help')
         
         msg('The following commands are available:')
         msg(concat('- ', color(green), '/mail', color(white), ': show this message'))
@@ -195,7 +210,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
         assign(@type, 'mail')
     )
     
-    assign(@mail, get_value(concat('mail.', to_lower(@to))))
+    assign(@mail, _player_mail(@to))
     
     # Creation of actual mail.
     assign(@msg, array(@from, @msg, to_lower(@type)))
@@ -207,7 +222,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     
     # Add the mail to the list and store it.
     array_push(@mail, @msg)
-    store_value(concat('mail.', to_lower(@to)), @mail)
+    _update_player_mail(@to, @mail)
     
     # Let the player know.
     if(ponline(@to),
@@ -255,7 +270,7 @@ proc(_accept_item, @i,
     # save the rest for later.
     
     # Grab their mailbox
-    assign(@mail, get_value(concat('mail.', to_lower(player()))))
+    assign(@mail, _player_mail(player()))
     assign(@id, subtract(@i, 1))
     
     try(
@@ -284,7 +299,7 @@ proc(_accept_item, @i,
                     msg(concat(color(red), 'Looks like your inventory is full.' color(green), 'Saving left over items for later :)'))
                     
                     assign(@mail[@id][1], concat(@data[0], ',', @left))
-                    store_value(concat('mail.', to_lower(player())), @mail)
+                    _update_player_mail(player(), @mail)
                     
                     return(true)
                 ),
@@ -302,7 +317,7 @@ proc(_accept_item, @i,
 )
 
 proc(_read_mail, @player,
-    assign(@mail, get_value(concat('mail.', to_lower(@player))))
+    assign(@mail, _player_mail(@player))
     # Index for display
     assign(@i, 1)
     
@@ -311,6 +326,7 @@ proc(_read_mail, @player,
     is_null(@mail), 
     equals(length(@mail), 0)),
         msg(concat(color(red), 'No mail for' to_lower(@player), '.'))
+        return(false)
     , # else
 		msg(concat(color(green), 'Inbox for' to_lower(@player), ':'))
 		
@@ -339,6 +355,8 @@ proc(_read_mail, @player,
             msg(concat(@i, ') [', color(red), @msg[0], color(white),'] ', @message))
             inc(@i)
         )
+        
+        return(true)
     )
 )
 
@@ -346,11 +364,12 @@ proc(_read_mail_id, @player, @i,
     # Read an individual mail.
     
     # Grab the users mailbox.
-    assign(@mail, get_value(concat('mail.', to_lower(@player))))
+    assign(@mail, _player_mail(@player))
     assign(@id, subtract(@i, 1))
     
     try(
         # Check the type of the mail, and act on it.
+        # If no mail with this id exists, allow the exception to be raised, and return false later.
         switch(@mail[@id][2], 
             'mail',
                 # Plain message
@@ -368,13 +387,14 @@ proc(_read_mail_id, @player, @i,
         
         return(true)
     , @ex,
+        # No mail with that id exists (or some other error, but we are expecting this one!)
         return(false)
     )
 )
 
 proc(_clear_mail, @player,
     # Get rid of everything.
-    clear_value(concat('mail.', to_lower(@player)))
+    _clear_player_mail(@player)
     msg(concat(color(green), 'Mail successfully cleared for ' @player))
 )
 
@@ -382,14 +402,14 @@ proc(_del_mail, @player, @id,
     # Delete an individual item.
     
     # Get their mailbox
-    assign(@mail, get_value(concat('mail.', to_lower(@player))))
+    assign(@mail, _player_mail(@player))
     assign(@remid, subtract(@id, 1))
     
     # Make sure the id exists
     ifelse(array_index_exists(@mail, @remid),
         # You are the weakest link. * snip *
         array_remove(@mail, @remid)
-        store_value(concat('mail.', to_lower(@player)), @mail)
+        _update_player_mail(@player, @mail)
         
         return(true)
     , # else
