@@ -1,10 +1,20 @@
 /*
     persistence layout:
-        mail.<username> array
-                |
-                +-message: {<sender>, <msg>, 'mail'}
-                |
-                +-item: {<sender>, '<itemid>,<count>', 'item'}
+    
+    chmail
+        |
+        +- inbox.<username> array
+        |           |
+        |           +- message: {<sender>, <msg>, 'mail'}
+        |           |
+        |           +- item: {<sender>, '<itemid>,<count>', 'item'}
+        |
+        +- options array
+            |
+            +- <name>: value
+            |
+            +- <name>: value
+
 */
 
 export(assign(@_mail_debug, false))
@@ -17,6 +27,33 @@ proc(_player_mail, @player,
 
 proc(_update_player_mail, @player, @mail,
     store_value(concat('chmail.inbox.', to_lower(@player)), @mail)
+)
+
+proc(_get_option, @n,
+    assign(@name, to_lower(@n))
+    assign(@id, concat('chmail.options.', @name))
+    
+    if(has_value(@id),
+        assign(@opt, get_value(@id))
+    , # else
+        assign(@opt, null)
+    )
+    
+    return(@opt)
+)
+
+proc(_set_option, @n, @value,
+    assign(@name, to_lower(@n))
+    assign(@id, concat('chmail.options.', @name))
+    
+    store_value(@id, @value)
+)
+
+proc(_clear_option, @n,
+    assign(@name, to_lower(@n))
+    assign(@id, concat('chmail.options.', @name))
+    
+    clear_value(@id)
 )
 
 proc(_clear_player_mail, @player,
