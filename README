@@ -9,6 +9,6 @@ commands:
 	/mail read: view the message index
 	/mail read <id>: read a single message
 	/mail send <user> <message>: send a message to a user
-    /mail senditem <user> <item> <amount>: send an item to a user
+    /mail senditem <user> <item> [amount]: send an item to a user
 	/mail clear: clear all messages
 	/mail delete <id>: delete a specific message
