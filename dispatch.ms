@@ -9,7 +9,7 @@ proc(_mail_dispatch, @args,
         assign(@first, @args[0]) # pop first item
         array_remove(@args, 0)
     , # else
-        assign(@first, '')	
+        assign(@first, '')    
     )
     
     switch(to_lower(@first),
@@ -35,18 +35,24 @@ proc(_mail_dispatch, @args,
             ),
 
         'senditem',
-            # /mail send <player> <item> <count>
+            # /mail send <player> <item> [count]
             _mail_debug('_mail_dispatch.senditem')
             
             # Check number of arguments.
-            if(equals(length(@args), 3),
+            if(and(lte(length(@args), 3), gte(length(@args), 2)),
                 # Send off payload.
                 
+                if(equals(length(@args), 2),
+                    # Push the special value "i1" onto the last arg if an amount wasn't specified.
+                    # This way we send the whole stack if the item is "hand", or send 1 item if it's a name.
+                    array_push(@args, i1)
+                )
+                
                 if(_send_item(@args[0], @args[1], @args[2]),
-                    msg(concat(color(green), 'Item(s) successfully sent to ', @args[0]))
+                    msg(color(green), 'Item(s) successfully sent to ', @args[0])
                 )
             , # else
-                msg('Usage: /mail send <player> <item> <count>')
+                msg('Usage: /mail send <player> <item> [count]')
             ),
             
         'accept',
@@ -80,7 +86,7 @@ proc(_mail_dispatch, @args,
                     msg('Type /mail clear to clear your mail entries.')
                     msg('Type /mail accept <id> to accept an item.')
                 , #else
-                    msg(concat(color(red), 'That id does not exist'))
+                    msg(color(red), 'That id does not exist')
                 )
                 
                 return(true)
@@ -117,9 +123,9 @@ proc(_mail_dispatch, @args,
                 # Delete a single mail.
                 # TODO: Make sensitive to item mails.
                 ifelse(_del_mail(player(), @args[0]),
-                    msg(concat(color(green), 'Message with id' @args[0] 'deleted.'))
+                    msg(color(green), 'Message with id' @args[0] 'deleted.')
                 , # else
-                    msg(concat(color(red), 'That index does not exist!'))
+                    msg(color(red), 'That index does not exist!')
                 )
                 
                 return(true)
@@ -131,12 +137,12 @@ proc(_mail_dispatch, @args,
         _mail_debug('_mail_dispatch.help')
         
         msg('The following commands are available:')
-        msg(concat('- ', color(green), '/mail', color(white), ': show this message'))
-        msg(concat('- ', color(green), '/mail send <player> <message>', color(white), ': send <message> to player.'))
-        msg(concat('- ', color(green), '/mail senditem <player> <item> <count>', color(white), ': send <count> of <item> to <player> if you have it in your inventory.'))
-        msg(concat('- ', color(green), '/mail read [id]', color(white), ': read messages.'))
-        msg(concat('- ', color(green), '/mail accept <id>', color(white), ': accept an item a player sent you.'))
-        msg(concat('- ', color(green), '/mail clear', color(white), ': clear all messages.'))
-        msg(concat('- ', color(green), '/mail delete <id>', color(white), ': delete message <id>.'))
+        msg('- ', color(green), '/mail', color(white), ': show this message')
+        msg('- ', color(green), '/mail send <player> <message>', color(white), ': send <message> to player.')
+        msg('- ', color(green), '/mail senditem <player> <item> [count]', color(white), ': send [count] (default 1) of <item> to <player> if you have it in your inventory. <item> can also be "hand" for the item in your hand.')
+        msg('- ', color(green), '/mail read [id]', color(white), ': read messages.')
+        msg('- ', color(green), '/mail accept <id>', color(white), ': accept an item a player sent you.')
+        msg('- ', color(green), '/mail clear', color(white), ': clear all messages.')
+        msg('- ', color(green), '/mail delete <id>', color(white), ': delete message <id>.')
     )
 )
