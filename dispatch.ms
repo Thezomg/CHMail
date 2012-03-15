@@ -9,7 +9,7 @@ proc(_mail_dispatch, @args,
         assign(@first, @args[0]) # pop first item
         array_remove(@args, 0)
     , # else
-        assign(@first, '')	
+        assign(@first, '')    
     )
     
     switch(to_lower(@first),
@@ -42,16 +42,16 @@ proc(_mail_dispatch, @args,
             if(and(lte(length(@args), 3), gte(length(@args), 2)),
                 # Send off payload.
                 
-				if(equals(length(@args), 2),
-					# Push the special value "i1" onto the last arg if an amount wasn't specified.
-					# This way we send the whole stack if the item is "hand", or send 1 item if it's a name.
-					array_push(@args, i1)
-				)
-				
+                if(equals(length(@args), 2),
+                    # Push the special value "i1" onto the last arg if an amount wasn't specified.
+                    # This way we send the whole stack if the item is "hand", or send 1 item if it's a name.
+                    array_push(@args, i1)
+                )
+                
                 if(_send_item(@args[0], @args[1], @args[2]),
                     msg(color(green), 'Item(s) successfully sent to ', @args[0])
                 )
-			, # else
+            , # else
                 msg('Usage: /mail send <player> <item> [count]')
             ),
             
