@@ -71,15 +71,17 @@ proc(_send_item, @target, @i, @count,
             
             # If an amount wasn't specified, grab the whole thing
             if(equals(@count, 'i1'),
+                _mail_debug('no amount was specified')
                 assign(@newcount, @itemcount)
                 set_pinv(player(), array(null: null))
-                
+                _mail_debug('removed item')
                 # No checking necessary. B)
                 assign(@send, true)
             , # else
                 assign(@newcount, @count)
                 # Did the user specify more than they had?
-                if(gte(@itemcount, @count)
+                _mail_debug(sconcat('Seeing if', @itemcount, 'is greater than or equal to', @newcount))
+                if(gte(@itemcount, @count),
                     assign(@left, subtract(@itemcount, @count))
                     if(equals(@left, 0),
                         set_pinv(array(null: null))
@@ -110,6 +112,7 @@ proc(_send_item, @target, @i, @count,
         )
     
         # Lets not give more than the user has!
+        _mail_debug(sconcat('Seeing if', @itemcount, 'is greater than', @newcount))
         if(gte(@itemcount, @newcount),
             assign(@taken, ptake_item(player(), @item, @newcount))
             
@@ -128,7 +131,7 @@ proc(_send_item, @target, @i, @count,
     )
     
     # Can we send it?
-    if(@send,    
+    if(equals(@send, true),    
         # Yes we can! Send off the payload.
             
         # TODO: MIGHT revert to copying the other code here instead, as it could
@@ -137,7 +140,7 @@ proc(_send_item, @target, @i, @count,
     , # else
         # Oops, give their junk back.
         if(equals_ic(@i, 'hand'),
-            set_pinv(array(null, @pinv))
+            set_pinv(array(null: @pinv))
         , # else 
             pgive_item(player(), @item, @newcount)
         )
