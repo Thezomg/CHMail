@@ -65,7 +65,7 @@ proc(_clear_poption, @player, @n,
 )
 
 proc(_clear_poptions, @player,
-    assign(@options, get_options(concat('chmail.poptions.', to_lower(@player))))
+    assign(@options, get_values(concat('chmail.poptions.', to_lower(@player))))
     
     foreach(@options, @option,
         clear_value(@option)
@@ -78,7 +78,7 @@ proc(_clear_player_mail, @player,
 )
 
 proc(_clear_all_mail,
-    assign(@inboxes, get_options(concat('chmail.inbox')))
+    assign(@inboxes, get_values(concat('chmail.inbox')))
     
     foreach(@inboxes, @inbox,
         clear_value(@inboxes)
