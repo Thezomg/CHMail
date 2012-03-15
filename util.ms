@@ -37,8 +37,52 @@ proc(_clear_option, @n,
     clear_value(@id)
 )
 
+proc(_get_poption, @player, @n,
+    assign(@name, to_lower(@n))
+    assign(@id, concat('chmail.poptions.', to_lower(@player), '.', @name))
+    
+    if(has_value(@id),
+        assign(@opt, get_value(@id))
+    , # else
+        assign(@opt, null)
+    )
+    
+    return(@opt)
+)
+
+proc(_set_poption, @player, @n, @value,
+    assign(@name, to_lower(@n))
+    assign(@id, concat('chmail.poptions.', to_lower(@player), '.', @name))
+    
+    store_value(@id, @value)
+)
+
+proc(_clear_poption, @player, @n,
+    assign(@name, to_lower(@n))
+    assign(@id, concat('chmail.poptions.', to_lower(@player), '.', @name))
+    
+    clear_value(@id)
+)
+
+proc(_clear_poptions, @player,
+    assign(@options, get_options(concat('chmail.poptions.', to_lower(@player))))
+    
+    foreach(@options, @option,
+        clear_value(@option)
+    )
+)
+    
+
 proc(_clear_player_mail, @player,
     clear_value(concat('chmail.inbox.', to_lower(@player)))
+)
+
+proc(_clear_all_mail,
+    assign(@inboxes, get_options(concat('chmail.inbox')))
+    
+    foreach(@inboxes, @inbox,
+        clear_value(@inboxes)
+    )
 )
 
 proc(_item_name_to_value, @i,

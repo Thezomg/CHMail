@@ -10,6 +10,12 @@
         |           +- item: {<sender>, '<itemid>,<count>', 'item'}
         |
         +- options array
+        |   |
+        |   +- <name>: value
+        |   |
+        |   +- <name>: value
+        |
+        +- poptions.<username> array
             |
             +- <name>: value
             |
@@ -298,12 +304,6 @@ proc(_read_mail_id, @player, @i,
     )
 )
 
-proc(_clear_mail, @player,
-    # Get rid of everything.
-    _clear_player_mail(@player)
-    msg(color(green), 'Mail successfully cleared for ' @player)
-)
-
 proc(_del_mail, @player, @id,
     # Delete an individual item.
     
@@ -315,6 +315,7 @@ proc(_del_mail, @player, @id,
     ifelse(array_index_exists(@mail, @remid),
         # You are the weakest link. * snip *
         array_remove(@mail, @remid)
+        
         _update_player_mail(@player, @mail)
         
         return(true)

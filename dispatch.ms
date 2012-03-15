@@ -108,9 +108,8 @@ proc(_mail_dispatch, @args,
             # /mail clear
             _mail_debug('_mail_dispatch.clear')
             
-            # Clear all items of mail. 
-            # TODO: Should probably make this sensitive to items as well.
-            _clear_mail(player()),
+            _clear_player_mail(player())
+            msg(color(green), 'Mail successfully cleared.'),
             
         'delete',
             # /mail delete <id>
