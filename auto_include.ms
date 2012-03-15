@@ -20,7 +20,6 @@
 include('dispatch.ms')
 include('util.ms')
 
-
 proc(_send_mail, @from, @to, @msg, assign(@type, null),
     # Send an abstract mail to someone.
     
@@ -53,102 +52,109 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     return(true)
 )
 
-proc(_send_item, @target, @i, @count,
+proc(_send_hand_item, @target, @i, @count,
+    assign(@hand, pinv(player(), null))
+        
+    # If there's nothing there, there's not much else to do
+    if(is_null(@hand),
+        msg(color(red), 'There\'s nothing in your hand!')
+        return(false)
+    , # else
+        assign(@item, concat(@hand['type'], ':', @hand['data']))
+        
+        # How many of the item is in their hand?
+        assign(@handcount, @hand['qty'])
+        
+        # If an amount wasn't specified, grab the whole thing
+        if(equals(@count, 'i1'),
+            _mail_debug('No amount was specified. Sending everything.')
+            
+            set_pinv(player(), array(null: null))
+            
+            _mail_debug('Removed item')
+            
+            # No checking necessary. B)
+            _send_mail(player(), @target, concat(@item, ',', @handcount), 'item')
+            
+            return(true)
+        , # else
+            # Did the user specify more than they had?
+            _mail_debug(sconcat('Seeing if', @handcount, 'is greater than or equal to', @count))
+            
+            if(gte(@handcount, @count),
+                assign(@left, subtract(@handcount, @count))
+                
+                if(equals(@left, 0),
+                    set_pinv(array(null: null))
+                    
+                    _mail_debug('Removed item')
+                , # else
+                    assign(@leftovers, @hand)
+                    array_set(@leftovers, 'qty', @left)
+                    
+                    set_pinv(player(), array(null: @leftovers))
+                    
+                    _mail_debug(sconcat('Leaving item in hand with' @leftovers))
+                )
+                
+                # Locked 'n ready, cap'n!
+                _send_mail(player(), @target, concat(@item, ',', @count), 'item')
+                
+                return(true)
+            , # else
+                msg(color(red), 'You don\'t have enough of the item!')
+                return(false)
+            )
+        )
+    )
+)
+
+proc(_send_item, @target, @i, @c,
     # Send items, removing them from this user's inventory.
     
     # Use the item in their hand if they specified "hand"
     if(equals_ic(@i, 'hand'),
-        assign(@pinv, pinv(player(), null))
-        # If there's nothing there, there's not much else to do
-        if(is_null(@pinv),
-            msg(color(red), 'There\'s nothing in your hand!')
-            return(false)
-        , # else
-            assign(@item, concat(@pinv[type], ':', @pinv[data]))
-            
-            # How many of the item is in their hand?
-            assign(@itemcount, @pinv[qty])
-            
-            # If an amount wasn't specified, grab the whole thing
-            if(equals(@count, 'i1'),
-                _mail_debug('no amount was specified')
-                assign(@newcount, @itemcount)
-                set_pinv(player(), array(null: null))
-                _mail_debug('removed item')
-                # No checking necessary. B)
-                assign(@send, true)
-            , # else
-                assign(@newcount, @count)
-                # Did the user specify more than they had?
-                _mail_debug(sconcat('Seeing if', @itemcount, 'is greater than or equal to', @newcount))
-                if(gte(@itemcount, @count),
-                    assign(@left, subtract(@itemcount, @count))
-                    if(equals(@left, 0),
-                        set_pinv(array(null: null))
-                    , # else
-                        assign(@leftovers, @pinv)
-                        array_set(@leftovers, qty, @left)
-                        set_pinv(array(null: @leftovers))
-                    )
-                    
-                    # Locked 'n ready, cap'n!
-                    assign(@send, true)
-                , # else
-                    msg(color(red), 'You don\'t have enough of the item!')
-                    return(false)
-                )
-            )
-        )
+        return(_send_hand_item(@target, @i, @c))
     , # else
         assign(@item, _item_name_to_value(@i))
+        
         # Find out how many of the item the user has
         assign(@itemcount, phas_item(player(), @item))
         
         # If no amount was specified, assume 1
-        if(equals(@count, 'i1'),
-            assign(@newcount, 1)
+        if(equals(@c, 'i1'),
+            assign(@count, 1)
         , # else
-            assign(@newcount, @count)
+            assign(@count, @c)
         )
     
         # Lets not give more than the user has!
-        _mail_debug(sconcat('Seeing if', @itemcount, 'is greater than', @newcount))
-        if(gte(@itemcount, @newcount),
-            assign(@taken, ptake_item(player(), @item, @newcount))
+        _mail_debug(sconcat('Seeing if' @itemcount 'is greater than' @count))
+        
+        if(gte(@itemcount, @count),
+            assign(@taken, ptake_item(player(), @item, @count))
             
             # Double check we are taking the amount we want.
-            if(equals(@taken, @newcount),
-            
-                # Yes, you can send it now.
-                assign(@send, true)
+            if(equals(@taken, @count),
+                # Send off the payload.
+                    
+                # TODO: MIGHT revert to copying the other code here instead, as it could
+                # be tailored a bit better :/
+                _send_mail(player(), @target, concat(@item, ',', @count), 'item')
+                
+                return(true)
+            , # else
+                # Oops, give their junk back.
+                pgive_item(player(), @item, @taken)
+                
+                msg(color(red), 'Oops, error occurred. Giving back your stuff!')
+                return(false)
             )
         , # else
-            msg(color(red), 'You don\'t have enough of the item!')
-        
+            msg(color(red), 'You don\'t have enough of this item!')
             return(false)
         )
-            
     )
-    
-    # Can we send it?
-    if(equals(@send, true),    
-        # Yes we can! Send off the payload.
-            
-        # TODO: MIGHT revert to copying the other code here instead, as it could
-        # be tailored a bit better :/
-        _send_mail(player(), @target, concat(@item, ',', @newcount), 'item')
-    , # else
-        # Oops, give their junk back.
-        if(equals_ic(@i, 'hand'),
-            set_pinv(array(null: @pinv))
-        , # else 
-            pgive_item(player(), @item, @newcount)
-        )
-        die(concat(color(red), 'Oops, error occurred. Giving back your stuff!'))
-    )
-        
-    # Yay.
-    return(true)
 )
 
 proc(_accept_item, @i,
