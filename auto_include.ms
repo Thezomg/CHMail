@@ -47,7 +47,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     
     # Let the player know.
     if(ponline(@to),
-        tmsg(@to,concat(color(green), 'You have mail! Type /mail read to view.'))
+        tmsg(@to, color(green), 'You have mail! Type /mail read to view.')
     )
     
     return(true)
@@ -56,33 +56,95 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
 proc(_send_item, @target, @i, @count,
     # Send items, removing them from this user's inventory.
     
-    # Convert any human-readable name to integer form
-    assign(@item, _item_name_to_value(@i))
-    # Find out how many of the item has
-    assign(@itemcount, phas_item(player(), @item))
-    
-    # Lets not give more than the user has!
-    if(gte(@itemcount, @count),
-        assign(@taken, ptake_item(player(), @item, @count))
-        
-        # Double check we are taking the amount we want.
-        if(equals(@taken, @count),
-            # Send off the payload.
-            
-            # TODO: MIGHT revert to copying the other code here instead, as it could
-            # be talored a but better :/
-            _send_mail(player(), @target, concat(@item, ',', @count), 'item')
+    # Use the item in their hand if they specified "hand"
+    if(equals_ic(@i, 'hand'),
+        assign(@pinv, pinv(player(), null))
+        # If there's nothing there, there's not much else to do
+        if(is_null(@pinv),
+            msg(color(red), 'There\'s nothing in your hand!')
+            return(false)
         , # else
-            # Oops, give their junk back.
-            pgive_item(player, @item, @count)
-            die(concat(color(red), 'Oops, error occurred. Giving back your stuff!'))
+            assign(@item, concat(@pinv[type], ':', @pinv[data]))
+            
+            # How many of the item is in their hand?
+            assign(@itemcount, @pinv[qty])
+            
+            # If an amount wasn't specified, grab the whole thing
+            if(equals(@count, 'i1'),
+                assign(@newcount, @itemcount)
+                set_pinv(player(), array(null: null))
+                
+                # No checking necessary. B)
+                assign(@send, true)
+            , # else
+                assign(@newcount, @count)
+                # Did the user specify more than they had?
+                if(gte(@itemcount, @count)
+                    assign(@left, subtract(@itemcount, @count))
+                    if(equals(@left, 0),
+                        set_pinv(array(null: null))
+                    , # else
+                        assign(@leftovers, @pinv)
+                        array_set(@leftovers, qty, @left)
+                        set_pinv(array(null: @leftovers))
+                    )
+                    
+                    # Locked 'n ready, cap'n!
+                    assign(@send, true)
+                , # else
+                    msg(color(red), 'You don\'t have enough of the item!')
+                    return(false)
+                )
+            )
         )
     , # else
-        msg(concat(color(red), 'You don\'t have enough!'))
+        assign(@item, _item_name_to_value(@i))
+        # Find out how many of the item the user has
+        assign(@itemcount, phas_item(player(), @item))
         
-        return(false)
+        # If no amount was specified, assume 1
+        if(equals(@count, 'i1'),
+            assign(@newcount, 1)
+        , # else
+            assign(@newcount, @count)
+        )
+    
+        # Lets not give more than the user has!
+        if(gte(@itemcount, @newcount),
+            assign(@taken, ptake_item(player(), @item, @newcount))
+            
+            # Double check we are taking the amount we want.
+            if(equals(@taken, @newcount),
+            
+                # Yes, you can send it now.
+                assign(@send, true)
+            )
+        , # else
+            msg(color(red), 'You don\'t have enough of the item!')
+        
+            return(false)
+        )
+            
     )
     
+    # Can we send it?
+    if(@send,    
+        # Yes we can! Send off the payload.
+            
+        # TODO: MIGHT revert to copying the other code here instead, as it could
+        # be tailored a bit better :/
+        _send_mail(player(), @target, concat(@item, ',', @newcount), 'item')
+    , # else
+        # Oops, give their junk back.
+        if(equals_ic(@i, 'hand'),
+            set_pinv(array(null, @pinv))
+        , # else 
+            pgive_item(player(), @item, @newcount)
+        )
+        die(concat(color(red), 'Oops, error occurred. Giving back your stuff!'))
+    )
+        
+    # Yay.
     return(true)
 )
 
@@ -112,12 +174,12 @@ proc(_accept_item, @i,
                     
                     # _del_mail assumes a 1-based count, @id is 0-based.
                     _del_mail(player(), add(@id, 1)) 
-                    msg(concat(color(green), 'Accepted items sent by' @mail[@id][0], '!'))
+                    msg(color(green), 'Accepted items sent by' @mail[@id][0], '!')
                     
                     return(true)
                 , # else
                     # Looks like we overflowed. Oops. Save the rest.
-                    msg(concat(color(red), 'Looks like your inventory is full.' color(green), 'Saving left over items for later :)'))
+                    msg(color(red), 'Looks like your inventory is full.' color(green), 'Saving left over items for later :)')
                     
                     assign(@mail[@id][1], concat(@data[0], ',', @left))
                     _update_player_mail(player(), @mail)
@@ -129,7 +191,7 @@ proc(_accept_item, @i,
                 assign(@message, '(This person sent you -something-, but I have no idea what to do with it!) :(')
         )
         
-        msg(concat('[', color(red), @mail[@id][0],color(white),'] ', $message))
+        msg('[', color(red), @mail[@id][0],color(white),'] ', $message)
         
         return(true)
     , @ex,
@@ -146,11 +208,11 @@ proc(_read_mail, @player,
     if(or(
     is_null(@mail), 
     equals(length(@mail), 0)),
-        msg(concat(color(red), 'No mail for' to_lower(@player), '.'))
+        msg(color(red), 'No mail for' to_lower(@player), '.')
         return(false)
     , # else
-		msg(concat(color(green), 'Inbox for' to_lower(@player), ':'))
-		
+        msg(color(green), 'Inbox for' to_lower(@player), ':')
+        
         foreach(@mail, @msg,
             # Check each message on the fly for it's type.
             switch(@msg[2], 
@@ -173,7 +235,7 @@ proc(_read_mail, @player,
             )
             
             # Actually show the message!
-            msg(concat(@i, ') [', color(red), @msg[0], color(white),'] ', @message))
+            msg(@i, ') [', color(red), @msg[0], color(white),'] ', @message)
             inc(@i)
         )
         
@@ -204,7 +266,7 @@ proc(_read_mail_id, @player, @i,
         )
         
         # Display the message or item.
-        msg(concat('[', color(red), @mail[@id][0],color(white),'] ', $message))
+        msg('[', color(red), @mail[@id][0],color(white),'] ', $message)
         
         return(true)
     , @ex,
@@ -216,7 +278,7 @@ proc(_read_mail_id, @player, @i,
 proc(_clear_mail, @player,
     # Get rid of everything.
     _clear_player_mail(@player)
-    msg(concat(color(green), 'Mail successfully cleared for ' @player))
+    msg(color(green), 'Mail successfully cleared for ' @player)
 )
 
 proc(_del_mail, @player, @id,
