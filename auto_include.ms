@@ -53,6 +53,11 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
 )
 
 proc(_send_hand_item, @target, @i, @count,
+    if(equals(player(), '~console'),
+        msg(color(red), 'You are console. You have no hand!')
+        return(false)
+    )
+    
     assign(@hand, pinv(player(), null))
         
     # If there's nothing there, there's not much else to do
@@ -119,7 +124,11 @@ proc(_send_item, @target, @i, @c,
         assign(@item, _item_name_to_value(@i))
         
         # Find out how many of the item the user has
-        assign(@itemcount, phas_item(player(), @item))
+        if(equals(player(), '~console'),
+            assign(@itemcount, 99999999)
+        , # else
+            assign(@itemcount, phas_item(player(), @item))
+        )
         
         # If no amount was specified, assume 1
         if(equals(@c, 'i1'),
@@ -132,7 +141,11 @@ proc(_send_item, @target, @i, @c,
         _mail_debug(sconcat('Seeing if' @itemcount 'is greater than' @count))
         
         if(gte(@itemcount, @count),
-            assign(@taken, ptake_item(player(), @item, @count))
+            if(equals(player(), '~console'),
+                assign(@taken, @count)
+            , #else
+                assign(@taken, ptake_item(player(), @item, @count))
+            )
             
             # Double check we are taking the amount we want.
             if(equals(@taken, @count),
@@ -148,6 +161,7 @@ proc(_send_item, @target, @i, @c,
                 pgive_item(player(), @item, @taken)
                 
                 msg(color(red), 'Oops, error occurred. Giving back your stuff!')
+                
                 return(false)
             )
         , # else
