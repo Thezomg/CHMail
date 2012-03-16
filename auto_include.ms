@@ -239,7 +239,8 @@ proc(_read_index, @player, @page,
         return(false)
     , # else
         # Page the inbox, to not clutter the chatarea too much.
-        assign(@pages, ceil(divide(length(@inbox), 4)))
+        assign(@pagelimit, _get_option('pagesperindex', 5))
+        assign(@pages, ceil(divide(length(@inbox), @pagelimit)))
         
         # Make sure the page exists.
         if(gt(@page, @pages),
@@ -249,11 +250,11 @@ proc(_read_index, @player, @page,
         msg(color(green), 'Inbox for' to_lower(@player), ': [ Page' @page 'of' @pages ']')
         
         # Slice the actual pages we want
-        assign(@mail, _page(@inbox, 5, @page))
+        assign(@mail, _page(@inbox, @pagelimit, @page))
         
         # Index for display
         # Depends on which page we are on!
-        assign(@id, multiply(subtract(@page, 1), 5))
+        assign(@id, multiply(subtract(@page, 1), @pagelimit))
         
         foreach(@mail, @msg,
             # Check each message on the fly for it's type.

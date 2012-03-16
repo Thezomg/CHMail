@@ -33,14 +33,14 @@ proc(_update_player_mail, @player, @mail,
     store_value(concat('chmail.inbox.', to_lower(@player)), @mail)
 )
 
-proc(_get_option, @n,
+proc(_get_option, @n, assign(@default, null),
     assign(@name, to_lower(@n))
     assign(@id, concat('chmail.options.', @name))
     
     if(has_value(@id),
         assign(@opt, get_value(@id))
     , # else
-        assign(@opt, null)
+        assign(@opt, @default)
     )
     
     return(@opt)
@@ -60,14 +60,14 @@ proc(_clear_option, @n,
     clear_value(@id)
 )
 
-proc(_get_poption, @player, @n,
+proc(_get_poption, @player, @n, assign(@default, null),
     assign(@name, to_lower(@n))
     assign(@id, concat('chmail.poptions.', to_lower(@player), '.', @name))
     
     if(has_value(@id),
         assign(@opt, get_value(@id))
     , # else
-        assign(@opt, null)
+        assign(@opt, @default)
     )
     
     return(@opt)
