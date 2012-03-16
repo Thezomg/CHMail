@@ -33,7 +33,48 @@ proc(_mail_dispatch, @args,
             , # else
                 die('Usage: /mail send <player> <message>')
             ),
-
+            
+        'set',
+            # /mail set [global] <node> <value>
+            _mail_debug('_mail_dispatch.set')
+            
+            # Need at least 2 args
+            if(array_index_exists(@args, 1),
+                # Is the player asking to set a global value?
+                if(equals(to_lower(@args[0]), 'global'),
+                    # Throw away global.
+                    array_remove(@args, 0)
+                    
+                    # We need a reliable auth system first!
+                    die(concat(color(red), 'Not implemented yet!'))
+                    
+                    # Check auth here.
+                    
+                    # Make sure there are enough args! (2 needed)
+                    if(array_index_exists(@args, 1),
+                        # Set the option, and leave the building.
+                        _set_option(@args[0], array_implode(@args[1..]))
+                        
+                        die(concat(color(green), 'Global' @args[0] 'set.'))
+                    , # else
+                        # Complain.
+                        die('Usage: /mail set global <option> <value>')
+                    )
+                , # else
+                    # Make sure there are enough args!
+                    if(array_index_exists(@args, 1),
+                        # Set the option, and leave the building.
+                        _set_poption(@args[0], array_implode(@args[1..]))
+                        
+                        die(concat(color(green), @args[0] 'set.'))
+                    , # else
+                        die('Usage: /mail set <option> <value>')
+                    )
+                )
+            , # else
+                die('Usage: /mail set [global] <option> <value>')
+            ),
+            
         'senditem',
             # /mail send <player> <item> [count]
             _mail_debug('_mail_dispatch.senditem')
@@ -83,7 +124,7 @@ proc(_mail_dispatch, @args,
             
             # Display brief index, max 20 chars per mail.
             if(_read_index(player(), @page),
-                die('Type /mail to see available options.')
+                die(concat(color(yellow), '/mail to see available options. /mail inbox <page> for more pages.'))
             ),
             
         'read',
@@ -142,6 +183,7 @@ proc(_mail_dispatch, @args,
         msg('- ', color(green), '/mail inbox [page]', color(white), ': read mail index.')
         msg('- ', color(green), '/mail accept <id>', color(white), ': accept an item a player sent you.')
         msg('- ', color(green), '/mail clear', color(white), ': clear all messages.')
+        msg('- ', color(green), '/mail set [global] <option> <value>', color(white), ': set an option.')
         die(concat('- ', color(green), '/mail delete <id>', color(white), ': delete message <id>.'))
     )
 )

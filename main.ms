@@ -1,5 +1,5 @@
 bind(player_join, null, null, @event, @server_name,
-    assign(@mail, get_value(concat('mail.', to_lower(@event[player]))))
+    assign(@mail, _player_mail(@event[player]))
 
     if(or(
     is_null(@mail),

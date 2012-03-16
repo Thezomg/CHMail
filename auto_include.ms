@@ -239,7 +239,8 @@ proc(_read_index, @player, @page,
         return(false)
     , # else
         # Page the inbox, to not clutter the chatarea too much.
-        assign(@pagelimit, _get_p_or_def_option('pagesperindex', 5))
+        assign(@pagelimit, _get_p_or_def_option(@player, 'pagesperindex', 5))
+        
         assign(@pages, ceil(divide(length(@inbox), @pagelimit)))
         
         # Make sure the page exists.
@@ -247,7 +248,7 @@ proc(_read_index, @player, @page,
             die(concat(color(red), 'Invalid inbox page! ( only' @pages 'exist )'))
         )
         
-        msg(color(green), 'Inbox for' to_lower(@player), ': [ Page' @page 'of' @pages ']')
+        msg(color(yellow), 'Inbox for' to_lower(@player), ': [ Page' @page 'of' @pages ']')
         
         # Slice the actual pages we want
         assign(@mail, _page(@inbox, @pagelimit, @page))
