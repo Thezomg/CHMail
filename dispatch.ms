@@ -55,7 +55,7 @@ proc(_mail_dispatch, @args,
                         # Set the option, and leave the building.
                         _set_option(@args[0], array_implode(@args[1..]))
                         
-                        die(concat(color(green), 'Global' @args[0] 'set.'))
+                        die(concat(color(green), 'Global' @args[0] 'set to' array_implode(@args[1..])))
                     , # else
                         # Complain.
                         die('Usage: /mail set global <option> <value>')
@@ -64,9 +64,9 @@ proc(_mail_dispatch, @args,
                     # Make sure there are enough args!
                     if(array_index_exists(@args, 1),
                         # Set the option, and leave the building.
-                        _set_poption(@args[0], array_implode(@args[1..]))
+                        _set_poption(player(), @args[0], array_implode(@args[1..]))
                         
-                        die(concat(color(green), @args[0] 'set.'))
+                        die(concat(color(green), @args[0] 'set to' array_implode(@args[1..])))
                     , # else
                         die('Usage: /mail set <option> <value>')
                     )
