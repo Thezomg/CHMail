@@ -1,5 +1,28 @@
 export(assign(@_mail_debug, false))
 
+# _page(array(1, 2, 3, 4, 5, 6, 7), 3, 1)
+proc(_page, @array, @itemsperpage, @p,
+    # @page = 0
+    assign(@page, subtract(@p, 1))
+
+    # @firstitem = 3 * 0 = 0
+    assign(@firstitem, multiply(@itemsperpage, @page))
+    
+    # @lastitem = 0 + (3 - 1) = 2
+    assign(@last, subtract(add(@firstitem, @itemsperpage), 1))
+    
+    # Limit to last item
+    if(gte(@last, length(@array)),
+        assign(@lastitem, subtract(length(@array), 1))
+    , # else
+        assign(@lastitem, @last)
+    )
+    
+    # @pages = @array[0..2] = {0, 1, 2}
+    assign(@pages, @array[cslice(@firstitem, @lastitem)])
+    return(@pages)
+)
+
 proc(_player_mail, @player,
     assign(@mail, get_value(concat('chmail.inbox.', to_lower(@player))))
     

@@ -31,7 +31,7 @@ proc(_mail_dispatch, @args,
                     die(concat(color(red), 'Oops, there was an error! Try again later?'))
                 )
             , # else
-                msg('Usage: /mail send <player> <message>')
+                die('Usage: /mail send <player> <message>')
             ),
 
         'senditem',
@@ -49,10 +49,10 @@ proc(_mail_dispatch, @args,
                 )
                 
                 if(_send_item(@args[0], @args[1], @args[2]),
-                    msg(color(green), 'Item(s) successfully sent to ', @args[0])
+                    die(concat(color(green), 'Item(s) successfully sent to ', @args[0]))
                 )
             , # else
-                msg('Usage: /mail send <player> <item> [count]')
+                die('Usage: /mail send <player> <item> [count]')
             ),
             
         'accept',
@@ -68,40 +68,40 @@ proc(_mail_dispatch, @args,
                     die(concat(color(red), 'Oops, there was an error! Try again later?'))
                 )
             , # else
-                msg('Usage: /mail accept <id>')
+                die('Usage: /mail accept <id>')
+            ),
+            
+        'inbox',
+            # /mail inbox
+            _mail_debug('_mail_dispatch.index')
+            
+            if(array_index_exists(@args, 0),
+                assign(@page, @args[0])
+            , # else
+                assign(@page, 1)
+            )
+            
+            # Display brief index, max 20 chars per mail.
+            if(_read_index(player(), @page),
+                die('Type /mail to see available options.')
             ),
             
         'read',
             # /mail read [id]
             _mail_debug('_mail_dispatch.read')
             
-            # Check args. Don't care about extra args.
-            ifelse(array_index_exists(@args, 0),
+            if(array_index_exists(@args, 0),
                 # /mail read <id>
-                
                 _mail_debug('reading id' @args[0])
                 
                 # Display a single mail.
                 ifelse(_read_mail_id(player(), @args[0]),
-                    msg('Type /mail clear to clear your mail entries.')
-                    msg('Type /mail accept <id> to accept an item.')
+                    die('Type /mail to see available options.')
                 , #else
-                    msg(color(red), 'That id does not exist')
+                    die(concat(color(red), 'That id does not exist'))
                 )
-                
-                return(true)
             , # else
-                # /mail read
-                
-                _mail_debug('reading mail index')
-                
-                # Display brief index, max 20 chars per mail.
-                if(_read_mail(player()),
-                    msg('Type /mail clear to clear your mail entries.')
-                    msg('Type /mail accept <id> to accept an item.')
-                    msg('Type /mail delete <id> to delete a specific mail.')
-                )
-                return(true)
+                die('Usage: /mail read <id>')
             ),
             
         'clear',
@@ -109,7 +109,7 @@ proc(_mail_dispatch, @args,
             _mail_debug('_mail_dispatch.clear')
             
             _clear_player_mail(player())
-            msg(color(green), 'Mail successfully cleared.'),
+            die(concat(color(green), 'Mail successfully cleared.')),
             
         'delete',
             # /mail delete <id>
@@ -122,12 +122,10 @@ proc(_mail_dispatch, @args,
                 # Delete a single mail.
                 # TODO: Make sensitive to item mails.
                 ifelse(_del_mail(player(), @args[0]),
-                    msg(color(green), 'Message with id' @args[0] 'deleted.')
+                    die(concat(color(green), 'Message with id' @args[0] 'deleted.'))
                 , # else
-                    msg(color(red), 'That index does not exist!')
+                    die(concat(color(red), 'That index does not exist!'))
                 )
-                
-                return(true)
             )
             
             msg('Usage: /mail delete <id>'),
@@ -138,10 +136,12 @@ proc(_mail_dispatch, @args,
         msg('The following commands are available:')
         msg('- ', color(green), '/mail', color(white), ': show this message')
         msg('- ', color(green), '/mail send <player> <message>', color(white), ': send <message> to player.')
+        # A little long for the in-game console. Possibly move the long explanation to the actual trigger, when incorrectly put?
         msg('- ', color(green), '/mail senditem <player> <item> [count]', color(white), ': send [count] (default 1) of <item> to <player> if you have it in your inventory. <item> can also be "hand" for the item in your hand.')
-        msg('- ', color(green), '/mail read [id]', color(white), ': read messages.')
+        msg('- ', color(green), '/mail read <id>', color(white), ': read message with id <id>.')
+        msg('- ', color(green), '/mail inbox [page]', color(white), ': read mail index.')
         msg('- ', color(green), '/mail accept <id>', color(white), ': accept an item a player sent you.')
         msg('- ', color(green), '/mail clear', color(white), ': clear all messages.')
-        msg('- ', color(green), '/mail delete <id>', color(white), ': delete message <id>.')
+        die(concat('- ', color(green), '/mail delete <id>', color(white), ': delete message <id>.'))
     )
 )

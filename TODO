@@ -1,2 +1,1 @@
-allow /mail delete 1,2-4
-support multiple pages of inbox
+allow /mail {delete,read,accept} 1,2-4

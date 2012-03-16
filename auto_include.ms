@@ -228,19 +228,32 @@ proc(_accept_item, @i,
     )
 )
 
-proc(_read_mail, @player,
-    assign(@mail, _player_mail(@player))
-    # Index for display
-    assign(@i, 1)
+proc(_read_index, @player, @page,
+    assign(@inbox, _player_mail(@player))
     
     # Make sure the user really does have mail.
     if(or(
-    is_null(@mail), 
-    equals(length(@mail), 0)),
+    is_null(@inbox), 
+    equals(length(@inbox), 0)),
         msg(color(red), 'No mail for' to_lower(@player), '.')
         return(false)
     , # else
-        msg(color(green), 'Inbox for' to_lower(@player), ':')
+        # Page the inbox, to not clutter the chatarea too much.
+        assign(@pages, ceil(divide(length(@inbox), 4)))
+        
+        # Make sure the page exists.
+        if(gt(@page, @pages),
+            die(concat(color(red), 'Invalid inbox page! ( only' @pages 'exist )'))
+        )
+        
+        msg(color(green), 'Inbox for' to_lower(@player), ': [ Page' @page 'of' @pages ']')
+        
+        # Slice the actual pages we want
+        assign(@mail, _page(@inbox, 5, @page))
+        
+        # Index for display
+        # Depends on which page we are on!
+        assign(@id, multiply(subtract(@page, 1), 5))
         
         foreach(@mail, @msg,
             # Check each message on the fly for it's type.
@@ -264,8 +277,8 @@ proc(_read_mail, @player,
             )
             
             # Actually show the message!
-            msg(@i, ') [', color(red), @msg[0], color(white),'] ', @message)
-            inc(@i)
+            msg(add(@id, 1), ') [', color(red), @msg[0], color(white),'] ', @message)
+            inc(@id)
         )
         
         return(true)
