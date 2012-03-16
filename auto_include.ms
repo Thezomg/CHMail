@@ -239,7 +239,7 @@ proc(_read_index, @player, @page,
         return(false)
     , # else
         # Page the inbox, to not clutter the chatarea too much.
-        assign(@pagelimit, _get_option('pagesperindex', 5))
+        assign(@pagelimit, _get_p_or_def_option('pagesperindex', 5))
         assign(@pages, ceil(divide(length(@inbox), @pagelimit)))
         
         # Make sure the page exists.
