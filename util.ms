@@ -33,6 +33,10 @@ proc(_update_player_mail, @player, @mail,
     store_value(concat('chmail.inbox.', to_lower(@player)), @mail)
 )
 
+proc(_get_p_or_def_option, @p, @v, assign(@default, null),
+    return(_get_poption(@p, @n, _get_option(@n, @default)))
+)
+
 proc(_get_option, @n, assign(@default, null),
     assign(@name, to_lower(@n))
     assign(@id, concat('chmail.options.', @name))
