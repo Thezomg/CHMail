@@ -1,1 +1,3 @@
 allow /mail {delete,read,accept} 1,2-4
+add option do disallow sending items to self.
+possible issue with /mail read <id>
