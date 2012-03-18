@@ -33,6 +33,41 @@ proc(_update_player_mail, @player, @mail,
     store_value(concat('chmail.inbox.', to_lower(@player)), @mail)
 )
 
+# Proc for removing a player from the multiline-mail-composing list
+proc(_resolve_mail_list_removal, assign(@player, player()),
+    
+    import(@mail_messages)
+    import(@recipients)
+
+    # Is there actually anybody composing mail?
+    # (Again, checks for an empty array ##wait until it works!##)
+    if(equals(@mail_messages, ''),
+        throw(null, 'No one is composing multiline mail')
+    
+    , # else
+        # Otherwise, carry on.
+        
+        # Is this the last person sending mail?
+        if(equals(array_size(@mail_messages), 1),
+            # If so, set the mail-composing and recipient lists to an empty string (equivalent to a nonexistent import()'d ivar),
+            # and unbind the two mail chat events.
+            assign(@mail_messages, '')
+            assign(@recipients, '')
+            export(@mail_messages)
+            export(@recipients)
+            unbind('mail-hold-back-chat')
+            unbind('mail-compose')
+        
+        , # else
+            # Otherwise, simply remove them from the lists.
+            array_remove(@mail_messages, to_lower(@player))
+            array_remove(@recipients, to_lower(@player))
+            export(@mail_messages)
+            export(@recipients)
+        )
+    )
+)
+
 proc(_get_p_or_def_option, @p, @n, assign(@default, null),
     return(_get_poption(@p, @n, _get_option(@n, @default)))
 )
