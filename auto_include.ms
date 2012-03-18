@@ -423,7 +423,7 @@ proc(_read_mail_id, @player, @i,
         )
         
         # Display the message or item.
-        msg('[', color(red), @mail[@id][0],color(white),'] ', $message)
+        msg('[', color(red), @mail[@id][0],color(white),'] ', @message)
         
         return(true)
     , @ex,
