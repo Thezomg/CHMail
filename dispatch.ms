@@ -100,7 +100,7 @@ proc(_mail_dispatch, @args,
             # /mail accept <id>
             
             # Check arguments.
-            if(equals(length(@args), 1),
+            if(@args,
                 # Try to accept items, as many as possible, then delete the mail.
                 # If not all items were received, amend the mail and keep it.
                 

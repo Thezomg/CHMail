@@ -110,7 +110,7 @@ proc(_send_hand_item, @target, @i, @count,
             if(gte(@handcount, @count),
                 assign(@left, subtract(@handcount, @count))
                 
-                if(equals(@left, 0),
+                if(not(@left),
                     set_pinv(array(null: null))
                     
                     _mail_debug('Removed item')
@@ -331,7 +331,7 @@ proc(_accept_item, @i,
                 # items due to a full inv.
                 assign(@left, subtract(@data[1], pgive_item(player(), @data[0], @data[1])))
                 
-                if(equals(@left, 0),
+                if(not(@left),
                     # Remove the item mail, as it is no longer useful.
                     
                     # _del_mail assumes a 1-based count, @id is 0-based.
@@ -369,7 +369,7 @@ proc(_read_index, @player, @page,
     # Make sure the user really does have mail.
     if(or(
     is_null(@inbox), 
-    equals(length(@inbox), 0)),
+    not(length(@inbox)),
         msg(color(red), 'No mail for' to_lower(@player), '.')
         return(false)
     , # else
