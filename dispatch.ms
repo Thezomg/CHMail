@@ -46,7 +46,7 @@ proc(_mail_dispatch, @args,
                     array_remove(@args, 0)
                     
                     if(not(has_permission(player(), 'chmail.globalset')),
-                        die(color(red), 'You do not have permission to set global values!')
+                        die(concat(color(red), 'You do not have permission to set global values!'))
                     )
                     
                     # Make sure there are enough args! (2 needed)
