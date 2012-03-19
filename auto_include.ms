@@ -31,7 +31,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     
     # Restrict permissions for this.
     if(not(has_permission(player(), 'chmail.send')),
-        die(color(red), 'You do not have the required permissions to send mail!')
+        die(concat(color(red), 'You do not have the required permissions to send mail!'))
     )
     
     # Keep the user from sending messages too quickly,
