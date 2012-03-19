@@ -369,7 +369,7 @@ proc(_read_index, @player, @page,
     # Make sure the user really does have mail.
     if(or(
     is_null(@inbox), 
-    not(length(@inbox)),
+    not(length(@inbox))),
         msg(color(red), 'No mail for' to_lower(@player), '.')
         return(false)
     , # else
