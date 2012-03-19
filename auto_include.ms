@@ -40,7 +40,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     if(and(
     not(has_permission(player(), 'chmail.send.bypasstimeout'),
     not(_cooldown(@cooldown, 'send')))),
-        die(color(red), 'You need to wait' @cooldown 'seconds between messages!')
+        die(concat(color(red), 'You need to wait' @cooldown 'seconds between messages!'))
     )
     
     if(or(
@@ -139,14 +139,14 @@ proc(_send_item, @target, @i, @c,
     # Send items, removing them from this user's inventory.
     
     if(not(has_permission(player(), 'chmail.send.item')),
-        die(color(red), 'You do not have the required permissions to send items!')
+        die(concat(color(red), 'You do not have the required permissions to send items!'))
     )
     
     # Restrict sending items to onesself only by permission.
     if(and(
     equals_ic(@target, player()),
     not(has_permission(player(), 'chmail.send.item.self'))),
-        die(color(red), 'You do not have the required permissions to send items to yourself!')
+        die(concat(color(red), 'You do not have the required permissions to send items to yourself!'))
     )
     
     # Use the item in their hand if they specified "hand"
