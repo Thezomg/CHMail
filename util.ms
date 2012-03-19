@@ -1,5 +1,44 @@
 export(assign(@_mail_debug, false))
 
+# _expand(array(0,1,2,3,4,5,6,7,8,9), '1,4-5,9')
+proc(_expand, @array, @input, assign(@decr, false),
+    assign(@parts, reg_split(',', @input)) # {'1', '4-5', '9'}
+    assign(@retn, array())
+    
+    foreach(@parts, @part,
+        ifelse(
+        is_integral(@part),
+            if(@decr,
+                assign(@index, subtract(@part, 1))
+            , # else
+                assign(@index, @part)
+            )
+            
+            array_push(@retn, @array[@index]),
+        equals(reg_count('-', @part), 1), 
+            assign(@range, reg_split('-', @part))
+            
+            if(@decr,
+                assign(@first, subtract(@range[0], 1))
+                assign(@last, subtract(@range[1], 1))
+            , # else
+                assign(@first, @range[0])
+                assign(@last, @range[1])
+            )
+            
+            if(lt(@first, @last),
+                foreach(@array[cslice(@first, @last)], @item,
+                    try(
+                        array_push(@retn, @item)
+                    )
+                )
+            )
+        )
+    )
+    
+    return(@retn)
+)
+
 proc(_cooldown, @time, @id,
     assign(@node, concat('chmail.tracking.', player(), '.', @id))
     assign(@oldTime, get_value(@node))
