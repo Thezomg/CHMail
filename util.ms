@@ -1,5 +1,20 @@
 export(assign(@_mail_debug, false))
 
+proc(_cooldown, @time, @id,
+    assign(@node, concat('chmail.tracking.', player(), '.', @id))
+    assign(@oldTime, get_value(@node))
+ 
+    if(and(
+    not(is_null(@oldTime)),
+    lt(divide(subtract(time(), @oldTime), 1000), @time)),
+        msg(color(red), 'You have to wait before doing that again.')
+        return(false)
+    , # else
+        store_value(@node, time())
+        return(true)
+    )
+)
+
 # _page(array(1, 2, 3, 4, 5, 6, 7), 3, 1)
 proc(_page, @array, @itemsperpage, @p,
     # @page = 0

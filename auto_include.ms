@@ -1,27 +1,25 @@
 /*
     persistence layout:
     
-    chmail
+    chmail.
         |
-        +- inbox.<username> array
+        +- inbox.<username> (array) # storage of actual mail messages.
         |           |
         |           +- message: {<sender>, <msg>, 'mail'}
         |           |
-        |           +- item: {<sender>, '<itemid>,<count>', 'item'}
+        |           +- item: {<sender>, '<itemid[:data]>,<count>', 'item'}
         |           |
         |           +- multiline message: {<sender>, <msg>, 'multiline-mail'}
         |
-        +- options array
-        |   |
-        |   +- <name>: value
+        +- options (array) # systemwide options.
         |   |
         |   +- <name>: value
         |
-        +- poptions.<username> array
-            |
-            +- <name>: value
-            |
-            +- <name>: value
+        +- poptions.<username> (array) # for users to customise their experience
+        |   |
+        |   +- <name>: value
+        |   
+        +- tracking.<username>.<trackid> (variable) # tracking of things like cooldown timeouts
 
 */
 
@@ -31,6 +29,20 @@ include('util.ms')
 proc(_send_mail, @from, @to, @msg, assign(@type, null),
     # Send an abstract mail to someone.
     
+    # Restrict permissions for this.
+    if(not(has_permission(player(), 'chmail.send')),
+        die(color(red), 'You do not have the required permissions to send mail!')
+    )
+    
+    # Keep the user from sending messages too quickly,
+    # unless they have an overriding permission.
+    assign(@cooldown, _get_option('sendtimeout', 10))
+    if(and(
+    not(has_permission(player(), 'chmail.send.bypasstimeout'),
+    not(_cooldown(@cooldown, 'send')))),
+        die(color(red), 'You need to wait' @cooldown 'seconds between messages!')
+    )
+    
     if(or(
     not(is_string(@type)),
     is_null(@type)),
@@ -38,6 +50,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
         assign(@type, 'mail')
     )
     
+    # Grab the player's mailbox
     assign(@mail, _player_mail(@to))
     
     # Creation of actual mail.
@@ -125,6 +138,17 @@ proc(_send_hand_item, @target, @i, @count,
 proc(_send_item, @target, @i, @c,
     # Send items, removing them from this user's inventory.
     
+    if(not(has_permission(player(), 'chmail.send.item')),
+        die(color(red), 'You do not have the required permissions to send items!')
+    )
+    
+    # Restrict sending items to onesself only by permission.
+    if(and(
+    equals_ic(@target, player()),
+    not(has_permission(player(), 'chmail.send.item.self'))),
+        die(color(red), 'You do not have the required permissions to send items to yourself!')
+    )
+    
     # Use the item in their hand if they specified "hand"
     if(equals_ic(@i, 'hand'),
         return(_send_hand_item(@target, @i, @c))
@@ -146,7 +170,7 @@ proc(_send_item, @target, @i, @c,
         )
     
         # Lets not give more than the user has!
-        _mail_debug(sconcat('Seeing if' @itemcount 'is greater than' @count))
+        _mail_debug('Seeing if' @itemcount 'is greater than' @count)
         
         if(gte(@itemcount, @count),
             if(equals(player(), '~console'),
@@ -181,7 +205,6 @@ proc(_send_item, @target, @i, @c,
 
 # Proc that will initialize multiline mail composition
 proc(_init_mail_chat, @recipient,
-
     import(@mail_messages)
     import(@recipients)
     
@@ -301,9 +324,6 @@ proc(_accept_item, @i,
     try(
         # Make sure it's an actual item that we are grabbing.
         switch(@mail[@id][2], 
-            'mail',
-                assign(@message, concat(color(red), 'There is no item associated with this id.')),
-                
             'item',
                 assign(@data, reg_split(',', @mail[@id][1])) # id,count
                 
@@ -328,6 +348,8 @@ proc(_accept_item, @i,
                     
                     return(true)
                 ),
+            'mail',
+                assign(@message, concat(color(red), 'There is no item associated with this id.')),
                 
             # default
                 assign(@message, '(This person sent you -something-, but I have no idea what to do with it!) :(')
