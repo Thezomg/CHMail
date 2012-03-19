@@ -67,7 +67,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     
     # Let the player know.
     if(ponline(@to),
-        tmsg(@to, color(green), 'You have mail! Type /mail read to view.')
+        tmsg(@to, color(green), 'You have mail! Type `/mail inbox` to view.')
     )
     
     return(true)
