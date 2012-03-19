@@ -38,8 +38,8 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     # unless they have an overriding permission.
     assign(@cooldown, _get_option('sendtimeout', 10))
     if(and(
-    not(has_permission(player(), 'chmail.send.bypasstimeout'),
-    not(_cooldown(@cooldown, 'send')))),
+    not(has_permission(player(), 'chmail.send.bypasstimeout')),
+    not(_cooldown(@cooldown, 'send'))),
         die(concat(color(red), 'You need to wait' @cooldown 'seconds between messages!'))
     )
     
