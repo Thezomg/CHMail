@@ -14,7 +14,9 @@ proc(_expand, @array, @input, assign(@decr, false),
                 assign(@index, @part)
             )
             
-            array_push(@retn, @array[@index]),
+            try(
+                array_push(@retn, array(@index, @array[@index]))
+            ),
         equals(reg_count('-', @part), 1), 
             assign(@range, reg_split('-', @part))
             
@@ -27,9 +29,10 @@ proc(_expand, @array, @input, assign(@decr, false),
             )
             
             if(lt(@first, @last),
-                foreach(@array[cslice(@first, @last)], @item,
+                foreach(range(@first, @last), @id,
                     try(
-                        array_push(@retn, @item)
+                        console(@id @array[@id])
+                        array_push(@retn, array(@id, @array[@id]))
                     )
                 )
             )

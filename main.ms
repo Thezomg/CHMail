@@ -6,6 +6,6 @@ bind(player_join, null, null, @event, @server_name,
     equals(length(@mail), 0)),
         die()
     , # else
-        tmsg(@event[player], concat(color(green), 'You have mail! Type /mail read to see'))
+        tmsg(@event[player], concat(color(green), 'You have mail! Type `/mail inbox` to see'))
     )
 )

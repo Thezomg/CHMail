@@ -426,32 +426,37 @@ proc(_read_mail_id, @player, @i,
     # Read an individual mail.
     
     # Grab the users mailbox.
-    assign(@mail, _player_mail(@player))
-    assign(@id, subtract(@i, 1))
+    assign(@inbox, _player_mail(@player))
+    # _expand allows for `1,4-5,6` notation to select mails to view.
+    assign(@mails, _expand(@inbox, @i, true))
     
-    try(
+    if(not(length(@mails)),
+        return(false)
+    )
+    
+    # iterate over all the matched ids, and spit them out
+    foreach(@mails, @mailitem,
+        assign(@id, @mailitem[0])
+        assign(@mail, @mailitem[1])
+        
         # Check the type of the mail, and act on it.
-        # If no mail with this id exists, allow the exception to be raised, and return false later.
-        switch(@mail[@id][2], 
+        switch(@mail[2], 
             'mail',
                 # Plain message
-                assign(@message, @mail[@id][1]),
+                assign(@message, @mail[1]),
             'item',
                 # Item. Show helpful message on how to accept.
-                assign(@data, reg_split(',', @mail[@id][1]))
+                assign(@data, reg_split(',', @mail[1]))
                 assign(@message, concat('[ ', @data[1] data_name(@data[0]), ' ] Type', '`/mail accept ', @id, '`', 'to accept.')),
             # default
                 assign(@message, '(This person sent you -something-, but I have no idea what to do with it!) :(')
         )
         
         # Display the message or item.
-        msg('[', color(red), @mail[@id][0],color(white),'] ', @message)
-        
-        return(true)
-    , @ex,
-        # No mail with that id exists (or some other error, but we are expecting this one!)
-        return(false)
+        msg(add(@id, 1),')' '[', color(red), @mail[0],color(white),'] ', @message)
     )
+    
+    return(true)
 )
 
 proc(_del_mail, @player, @id,

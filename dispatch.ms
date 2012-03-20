@@ -141,7 +141,7 @@ proc(_mail_dispatch, @args,
                     die(concat(color(red), 'That id does not exist'))
                 )
             , # else
-                die('Usage: /mail read <id>')
+                die('Usage: /mail read <id[,id][,id-id]>')
             ),
             
         'clear',
@@ -178,7 +178,7 @@ proc(_mail_dispatch, @args,
         msg('- ', color(green), '/mail send <player> <message>', color(white), ': send <message> to player.')
         # A little long for the in-game console. Possibly move the long explanation to the actual trigger, when incorrectly put?
         msg('- ', color(green), '/mail senditem <player> <item> [count]', color(white), ': send [count] (default 1) of <item> to <player> if you have it in your inventory. <item> can also be "hand" for the item in your hand.')
-        msg('- ', color(green), '/mail read <id>', color(white), ': read message with id <id>.')
+        msg('- ', color(green), '/mail read <id[,id][,id-id]>', color(white), ': read messages by id.')
         msg('- ', color(green), '/mail inbox [page]', color(white), ': read mail index.')
         msg('- ', color(green), '/mail accept <id>', color(white), ': accept an item a player sent you.')
         msg('- ', color(green), '/mail clear', color(white), ': clear all messages.')

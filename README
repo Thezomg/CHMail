@@ -7,7 +7,7 @@ This script requires version 3.3.1 or higher of CommandHelper.
 commands:
     /mail: shows mail help
     /mail inbox [page]: view the message index
-    /mail read <id>: read a single message
+    /mail read <id[,id][,id-id]>: read a single message
     /mail send <user> <message>: send a message to a user
     /mail senditem <user> <item> [amount]: send an item to a user
     /mail accept <id>: accept an item the user received
