@@ -155,6 +155,11 @@ proc(_send_item, @target, @i, @c,
     , # else
         assign(@item, _item_name_to_value(@i))
         
+        if(is_null(@item),
+            # Oops. Maybe they did it backwards? Friendly reminder.
+            die(concat(color(red),'Oops!') @i 'is not a valid item type!')
+        )
+        
         # Find out how many of the item the user has
         if(equals(player(), '~console'),
             assign(@itemcount, 99999999)
