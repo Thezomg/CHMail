@@ -1,9 +1,10 @@
-export(assign(@_mail_debug, false))
+#export(assign(@_mail_debug, false))
 
-# _expand(array(0,1,2,3,4,5,6,7,8,9), '1,4-5,9')
+# Will return {{id, item},...} from @array for an @input of 'x,y-z,a'
 proc(_expand, @array, @input, assign(@decr, false),
-    assign(@parts, reg_split(',', @input)) # {'1', '4-5', '9'}
-    assign(@retn, array())
+    # Too lazy to comment this right now.
+    assign(@parts, reg_split(',', @input))
+    assign(@retn, array()) # Returned object
     
     foreach(@parts, @part,
         ifelse(
@@ -42,14 +43,18 @@ proc(_expand, @array, @input, assign(@decr, false),
     return(@retn)
 )
 
-proc(_cooldown, @time, @id,
+proc(_cooleddown, @time, @id,
+    if(player() == '~console',
+        return(true)
+    )
+    
     assign(@node, concat('chmail.tracking.', player(), '.', @id))
     assign(@oldTime, get_value(@node))
+    msg(@oldtime)
  
     if(and(
     not(is_null(@oldTime)),
     lt(divide(subtract(time(), @oldTime), 1000), @time)),
-        msg(color(red), 'You have to wait before doing that again.')
         return(false)
     , # else
         store_value(@node, time())

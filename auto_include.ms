@@ -36,16 +36,15 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     
     # Keep the user from sending messages too quickly,
     # unless they have an overriding permission.
-    assign(@cooldown, _get_option('sendtimeout', 10))
-    if(and(
-    not(has_permission(player(), 'chmail.send.bypasstimeout')),
-    not(_cooldown(@cooldown, 'send'))),
-        die(concat(color(red), 'You need to wait' @cooldown 'seconds between messages!'))
+    assign(@timeout, _get_option('sendtimeout', 10))
+    assign(@cooleddown, _cooleddown(@timeout, 'send'))
+    assign(@hasperms, has_permission(player(), 'chmail.send.bypasstimeout'))
+    
+    if(not(@cooleddown) && not(@hasperms),
+        die(concat(color(red), 'You need to wait' @timeout 'seconds between messages!'))
     )
     
-    if(or(
-    not(is_string(@type)),
-    is_null(@type)),
+    if(not(is_string(@type)) || is_null(@type),
         # allow for a reasonable default
         assign(@type, 'mail')
     )
@@ -74,7 +73,7 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
 )
 
 proc(_send_hand_item, @target, @i, @count,
-    if(equals(player(), '~console'),
+    if(player() == '~console',
         msg(color(red), 'You are console. You have no hand!')
         return(false)
     )
@@ -92,7 +91,7 @@ proc(_send_hand_item, @target, @i, @count,
         assign(@handcount, @hand['qty'])
         
         # If an amount wasn't specified, grab the whole thing
-        if(equals(@count, 'i1'),
+        if(@count == 'i1',
             _mail_debug('No amount was specified. Sending everything.')
             
             set_pinv(player(), array(null: null))
@@ -107,10 +106,10 @@ proc(_send_hand_item, @target, @i, @count,
             # Did the user specify more than they had?
             _mail_debug(sconcat('Seeing if', @handcount, 'is greater than or equal to', @count))
             
-            if(gte(@handcount, @count),
-                assign(@left, subtract(@handcount, @count))
+            if(@handcount >= @count,
+                assign(@left, @handcount - @count)
                 
-                if(not(@left),
+                if(!@left,
                     set_pinv(array(null: null))
                     
                     _mail_debug('Removed item')
@@ -143,9 +142,7 @@ proc(_send_item, @target, @i, @c,
     )
     
     # Restrict sending items to onesself only by permission.
-    if(and(
-    equals_ic(@target, player()),
-    not(has_permission(player(), 'chmail.send.item.self'))),
+    if(equals_ic(@target, player()) && not(has_permission(player(), 'chmail.send.item.self')),
         die(concat(color(red), 'You do not have the required permissions to send items to yourself!'))
     )
     
@@ -155,20 +152,20 @@ proc(_send_item, @target, @i, @c,
     , # else
         assign(@item, _item_name_to_value(@i))
         
-        if(is_null(@item),
+        if(!@item,
             # Oops. Maybe they did it backwards? Friendly reminder.
             die(concat(color(red),'Oops!') @i 'is not a valid item type!')
         )
         
         # Find out how many of the item the user has
-        if(equals(player(), '~console'),
+        if(player() == '~console',
             assign(@itemcount, 99999999)
         , # else
             assign(@itemcount, phas_item(player(), @item))
         )
         
         # If no amount was specified, assume 1
-        if(equals(@c, 'i1'),
+        if(@c == 'i1',
             assign(@count, 1)
         , # else
             assign(@count, @c)
@@ -177,15 +174,15 @@ proc(_send_item, @target, @i, @c,
         # Lets not give more than the user has!
         _mail_debug('Seeing if' @itemcount 'is greater than' @count)
         
-        if(gte(@itemcount, @count),
-            if(equals(player(), '~console'),
+        if(@itemcount >= @count,
+            if(player() == '~console',
                 assign(@taken, @count)
             , #else
                 assign(@taken, ptake_item(player(), @item, @count))
             )
             
             # Double check we are taking the amount we want.
-            if(equals(@taken, @count),
+            if(@taken == @count,
                 # Send off the payload.
                     
                 # TODO: MIGHT revert to copying the other code here instead, as it could
@@ -222,7 +219,7 @@ proc(_init_mail_chat, @recipient,
     
     # Are there already people composing mail?
     # (check for an empty array too, just in case something derped ##wait until we make sure it actually works!##)
-    if(equals(@mail_messages, ''),
+    if(not(is_null(@mail_messages)) || length(@mail_messages) == 0,
         # If there aren't, go ahead and bind everything.
         
         # Event for accumulating chat messages to be sent back to the user upon completion of their mail message
@@ -298,7 +295,7 @@ proc(_init_mail_chat, @recipient,
                     # default
                         # If they didn't type a "command", start/continue writing to their mail message.
                         # Firstly, though, is there actually a mail message there yet?
-                        if(is_null(@mail_messages[to_lower(player())]),
+                        if(not(@mail_messages[to_lower(player())]),
                             # If not, simply set the mail message to the chat message.
                             assign(@mail_messages[to_lower(player())], @event[message])
                             
@@ -324,7 +321,7 @@ proc(_accept_item, @i,
     
     # Grab their mailbox
     assign(@mail, _player_mail(player()))
-    assign(@id, subtract(@i, 1))
+    assign(@id, @i - 1)
     
     try(
         # Make sure it's an actual item that we are grabbing.
@@ -334,13 +331,13 @@ proc(_accept_item, @i,
                 
                 # Keep track of how much was given, so we don't lose
                 # items due to a full inv.
-                assign(@left, subtract(@data[1], pgive_item(player(), @data[0], @data[1])))
+                assign(@left, @data[1] - pgive_item(player(), @data[0], @data[1]))
                 
-                if(not(@left),
+                if(!@left,
                     # Remove the item mail, as it is no longer useful.
                     
                     # _del_mail assumes a 1-based count, @id is 0-based.
-                    _del_mail(player(), add(@id, 1)) 
+                    _del_mail(player(), @id + 1) 
                     msg(color(green), 'Accepted items sent by' @mail[@id][0], '!')
                     
                     return(true)
@@ -372,20 +369,18 @@ proc(_read_index, @player, @page,
     assign(@inbox, _player_mail(@player))
     
     # Make sure the user really does have mail.
-    if(or(
-    is_null(@inbox), 
-    not(length(@inbox))),
+    if(is_null(@inbox) || length(@inbox) == 0,
         msg(color(red), 'No mail for' to_lower(@player), '.')
         return(false)
     , # else
         # Page the inbox, to not clutter the chatarea too much.
         assign(@pagelimit, _get_p_or_def_option(@player, 'pagesperindex', 5))
         
-        assign(@pages, ceil(divide(length(@inbox), @pagelimit)))
+        assign(@pages, ceil(length(@inbox) / @pagelimit))
         
         # Make sure the page exists.
-        if(gt(@page, @pages),
-            die(concat(color(red), 'Invalid inbox page! ( only' @pages 'exist )'))
+        if(@page > @pages,
+            die(concat(color(red), 'Invalid inbox page! ( only' @pages 'pages exist )'))
         )
         
         msg(color(yellow), 'Inbox for' to_lower(@player), ': [ Page' @page 'of' @pages ']')
@@ -395,7 +390,7 @@ proc(_read_index, @player, @page,
         
         # Index for display
         # Depends on which page we are on!
-        assign(@id, multiply(subtract(@page, 1), @pagelimit))
+        assign(@id, (@page - 1) * @pagelimit)
         
         foreach(@mail, @msg,
             # Check each message on the fly for it's type.
@@ -404,10 +399,10 @@ proc(_read_index, @player, @page,
                     # Display up to 20 characters of the message.
                     # Use /mail read <id> to display full message.
                     
-                    if(lt(length(@msg[1]),20),
+                    if(length(@msg[1]) < 20,
                         assign(@message, @msg[1])
                     ,
-                        assign(@message, concat(substr(@msg[1], 0, 17), '...'))
+                        assign(@message, concat(@msg[1][..17], '...'))
                     ),
                 'item',
                     # Quick n' dirty display of the item involved.
@@ -419,8 +414,8 @@ proc(_read_index, @player, @page,
             )
             
             # Actually show the message!
-            msg(add(@id, 1), ') [', color(red), @msg[0], color(white),'] ', @message)
-            inc(@id)
+            msg(@id + 1, ') [', color(red), @msg[0], color(white),'] ', @message)
+            @id++
         )
         
         return(true)
@@ -435,7 +430,7 @@ proc(_read_mail_id, @player, @i,
     # _expand allows for `1,4-5,6` notation to select mails to view.
     assign(@mails, _expand(@inbox, @i, true))
     
-    if(not(length(@mails)),
+    if(length(@mails) == 0, # This should always be an array.
         return(false)
     )
     
@@ -458,7 +453,7 @@ proc(_read_mail_id, @player, @i,
         )
         
         # Display the message or item.
-        msg(add(@id, 1),')' '[', color(red), @mail[0],color(white),'] ', @message)
+        msg(@id + 1,')' '[', color(red), @mail[0], color(white),'] ', @message)
     )
     
     return(true)
@@ -469,7 +464,7 @@ proc(_del_mail, @player, @id,
     
     # Get their mailbox
     assign(@mail, _player_mail(@player))
-    assign(@remid, subtract(@id, 1))
+    assign(@remid, @id - 1)
     
     # Make sure the id exists
     ifelse(array_index_exists(@mail, @remid),
