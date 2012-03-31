@@ -63,12 +63,15 @@ proc(_send_hand_item, @target, @i, @count,
 proc(_send_item, @target, @i, @c,
     # Send items, removing them from this user's inventory.
     
-    if(!has_permission(player(), 'chmail.send.item'),
+    if(!has_permission(player(), 'chmail.send.item') &&
+    !pisop(),
         die(concat(color(red), 'You do not have the required permissions to send items!'))
     )
     
     # Restrict sending items to onesself only by permission.
-    if(equals_ic(@target, player()) && !has_permission(player(), 'chmail.send.item.self'),
+    if(equals_ic(@target, player()) && 
+    !has_permission(player(), 'chmail.send.item.self') &&
+    !pisop(),
         die(concat(color(red), 'You do not have the required permissions to send items to yourself!'))
     )
     
@@ -82,7 +85,8 @@ proc(_send_item, @target, @i, @c,
     
     if(ponline(@target),
         # Lets check if that player can receive items.
-        if(!has_permission(@target, 'chmail.receive.item'),
+        if(!has_permission(@target, 'chmail.receive.item') &&
+        !pisop(@target),
             die(concat(color(red), 'That player does not have the required permissions to receive items!'))
         )
         
@@ -91,7 +95,8 @@ proc(_send_item, @target, @i, @c,
         assign(@targetworld, null)
     )
     
-    if(!has_permission(player(), 'chmail.send.item.allworlds') &&
+    if(!pisop() &&
+    !has_permission(player(), 'chmail.send.item.allworlds') &&
     @targetworld != @sourceworld &&
     player() != '~console',
         die(concat(color(red), 'You do not have the required permissions to send items to other worlds or offline players!'))
