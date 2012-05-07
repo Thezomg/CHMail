@@ -2,19 +2,24 @@ proc(_send_mail, @from, @to, @msg, assign(@type, null),
     # Send an abstract mail to someone.
     
     # Restrict permissions for this.
-    if(!has_permission(player(), 'chmail.send') &&
+    if(player() != '~console' &&
+    !has_permission(player(), 'chmail.send') &&
     !pisop(),
-        die(concat(color(red), 'You do not have the required permissions to send mail!'))
+        die(color(red) . 'You do not have the required permissions to send mail!')
+    )
+    
+    if(reg_count('[^a-zA-Z0-9_]', @to),
+        die(color(red) . 'Bad username provided! Only letters, numbers and underscores allowed!')
     )
     
     # Keep the user from sending messages too quickly,
     # unless they have an overriding permission.
     assign(@timeout, _get_option('sendtimeout', 10))
     assign(@cooleddown, _cooleddown(@timeout, 'send'))
-    assign(@hasperms, has_permission(player(), 'chmail.send.bypasstimeout') || pisop())
+    assign(@hasperms, player() == '~console' || has_permission(player(), 'chmail.send.bypasstimeout') || pisop())
     
     if(not(@cooleddown) && not(@hasperms),
-        die(concat(color(red), 'You need to wait' @timeout 'seconds between messages!'))
+        die(color(red) . 'You need to wait' @timeout 'seconds between messages!')
     )
     
     if(is_null(@type),
