@@ -1,4 +1,3 @@
-
 proc(_accept_item, @i,
     # Accept an item a user has sent us. If the inv is filled and not all items are given,
     # save the rest for later.
@@ -64,7 +63,7 @@ proc(_read_index, @player, @page,
         
         # Make sure the page exists.
         if(@page > @pages,
-            die(concat(color(red), 'Invalid inbox page! ( only' @pages 'pages exist )'))
+            die(color(red) . 'Invalid inbox page! ( only' @pages 'pages exist )')
         )
         
         msg(color(yellow), 'Inbox for' to_lower(@player), ': [ Page' @page 'of' @pages ']')
@@ -151,7 +150,7 @@ proc(_del_mail, @player, @id,
     assign(@remid, @id - 1)
     
     # Make sure the id exists
-    ifelse(array_index_exists(@mail, @remid),
+    ifelse(is_array(@mail) && array_index_exists(@mail, @remid),
         # You are the weakest link. * snip *
         array_remove(@mail, @remid)
         
